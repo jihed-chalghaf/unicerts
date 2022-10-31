@@ -1,0 +1,47 @@
+{
+  "name": "uni-papers",
+  "description": "Smart contract for handling university papers authenticity",
+  "license": "UNLICENSED",
+  "version": "0.0.1",
+  "keywords": [
+    "uni-papers",
+    "unipapers",
+    "smart-contracts",
+    "university papers authenticity"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jihed-chalghaf/uni-papers"
+  },
+  "scripts": {
+    "node:start": "npx hardhat node",
+    "compile": "npx hardhat compile",
+    "test": "npx hardhat test",
+    "deploy": "npx hardhat run --network deploy scripts/deploy.ts",
+    "deploy:dev": "npx hardhat run --network localhost scripts/deploy.ts",
+    "coverage": "npx hardhat coverage"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^2.0.0",
+    "hardhat": "^2.12.1"
+  },
+  "dependencies": {
+    "@ethersproject/providers": "5.7.2",
+    "@nomicfoundation/hardhat-chai-matchers": "1.0.4",
+    "@nomicfoundation/hardhat-network-helpers": "1.0.6",
+    "@nomiclabs/hardhat-ethers": "2.2.1",
+    "@nomiclabs/hardhat-etherscan": "3.1.2",
+    "@typechain/ethers-v5": "10.1.0",
+    "@typechain/hardhat": "6.1.3",
+    "@types/chai": "4.3.3",
+    "@types/mocha": "9.1.1",
+    "chai": "4.3.6",
+    "check-peer-dependencies": "^4.1.0",
+    "ethers": "5.7.2",
+    "hardhat-gas-reporter": "1.0.9",
+    "solidity-coverage": "0.8.2",
+    "ts-node": "10.9.1",
+    "typechain": "8.1.0",
+    "typescript": "4.9.1-beta"
+  }
+}
