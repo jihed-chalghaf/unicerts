@@ -1,6 +1,6 @@
-# UniPapers
+# Unicerts
 
-[![Actions Status](https://github.com/jihed-chalghaf/uni-papers/workflows/CI/badge.svg)](https://github.com/jihed-chalghaf/uni-papers/actions)
+[![Actions Status](https://github.com/jihed-chalghaf/unicerts/workflows/CI/badge.svg)](https://github.com/jihed-chalghaf/unicerts/actions)
 
 ## ☆ Overview
 
@@ -11,9 +11,9 @@ University papers authenticity dApp built on Ethereum blockchain using Solidity.
 ### 1. Clone the Project
 
 ```bash
-$ git clone https://github.com/jihed-chalghaf/uni-papers.git
+$ git clone https://github.com/jihed-chalghaf/unicerts.git
 
-$ cd uni-papers
+$ cd unicerts
 ```
 
 The following assumes the use of `node@>=16`.

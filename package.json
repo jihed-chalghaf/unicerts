@@ -1,17 +1,16 @@
 {
-  "name": "uni-papers",
-  "description": "Smart contract for handling university papers authenticity",
+  "name": "unicerts",
+  "description": "Smart contract for handling university certificates authenticity",
   "license": "UNLICENSED",
   "version": "0.0.1",
   "keywords": [
-    "uni-papers",
-    "unipapers",
+    "unicerts",
     "smart-contracts",
-    "university papers authenticity"
+    "university certificates authenticity"
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/jihed-chalghaf/uni-papers"
+    "url": "https://github.com/jihed-chalghaf/unicerts"
   },
   "scripts": {
     "node:start": "npx hardhat node",
