@@ -25,8 +25,8 @@ contract Unicerts {
         string speciality;
         string birthDate;
         string birthPlace;
-        string identityNumber;
-        string studentNumber;
+        string nin; // national identification number
+        string sid; // student identification number
         bytes32[] certificates;
     }
 
@@ -53,10 +53,19 @@ contract Unicerts {
     }
 
     // ⸻⸻⮞ Events ⮜⸻⸻
-    event RequestCertificate(address studentId);
-    event IssueCertificate(bytes32 certificateId);
-    event ReviewCertificate(bytes32 certificateId);
-    event AddStudent(address studentId);
+    event RequestCertificate(
+        address student,
+        string category,
+        string academicYear
+    );
+    event IssueCertificate(
+        bytes32 id,
+        address student,
+        string category,
+        string academicYear
+    );
+    event ReviewCertificate(bytes32 id, bool approve);
+    event AddStudent(address addr, string nin, string sid);
 
     // ⸻⸻⮞ Modifiers ⮜⸻⸻
     modifier onlyAdmin() {
@@ -68,6 +77,21 @@ contract Unicerts {
         require(
             studentsIndexes[msg.sender] != 0,
             "UNIPAPERS: STUDENT_NOT_FOUND"
+        );
+        _;
+    }
+
+    modifier validCategory(string memory category) {
+        bytes32 categoryHashBytes = keccak256(abi.encodePacked(category));
+
+        require(
+            categoryHashBytes == CATEGORIES[0] ||
+                categoryHashBytes == CATEGORIES[1] ||
+                categoryHashBytes == CATEGORIES[2] ||
+                categoryHashBytes == CATEGORIES[3] ||
+                categoryHashBytes == CATEGORIES[4] ||
+                categoryHashBytes == CATEGORIES[5],
+            "UNIPAPERS: INVALID_CATEGORY"
         );
         _;
     }
@@ -156,27 +180,16 @@ contract Unicerts {
         public
         view
         onlyAdmin
+        validCategory(category)
         returns (Certificate[] memory)
     {
-        bytes32 categoryHashBytes = keccak256(abi.encodePacked(category));
-
-        require(
-            categoryHashBytes == CATEGORIES[0] ||
-                categoryHashBytes == CATEGORIES[1] ||
-                categoryHashBytes == CATEGORIES[2] ||
-                categoryHashBytes == CATEGORIES[3] ||
-                categoryHashBytes == CATEGORIES[4] ||
-                categoryHashBytes == CATEGORIES[5],
-            "UNIPAPERS: INVALID_CATEGORY"
-        );
-
         Certificate[] memory _certificates;
         uint256 j = 0;
 
         for (uint256 i = 0; i < certificates.length; i++) {
             if (
                 keccak256(abi.encodePacked(certificates[i].category)) ==
-                categoryHashBytes
+                keccak256(abi.encodePacked(category))
             ) {
                 _certificates[j++] = certificates[i];
             }
@@ -193,8 +206,8 @@ contract Unicerts {
         string memory speciality,
         string memory birthDate,
         string memory birthPlace,
-        string memory identityNumber,
-        string memory studentNumber,
+        string memory nin,
+        string memory sid,
         bytes32[] memory certs
     ) public {
         require(
@@ -217,13 +230,13 @@ contract Unicerts {
                 speciality,
                 birthDate,
                 birthPlace,
-                identityNumber,
-                studentNumber,
+                nin,
+                sid,
                 certs
             )
         );
 
-        emit AddStudent(msg.sender);
+        emit AddStudent(msg.sender, nin, sid);
     }
 
     function requestCertificate(
@@ -231,7 +244,7 @@ contract Unicerts {
         string memory academicYear,
         bytes32 hashedData,
         uint256 issuedAt
-    ) public onlyStudent {
+    ) public onlyStudent validCategory(category) {
         // generate a unique hash identifier for each certificate
         bytes32 id = keccak256(
             abi.encodePacked(
@@ -259,7 +272,7 @@ contract Unicerts {
             )
         );
 
-        emit RequestCertificate(msg.sender);
+        emit RequestCertificate(msg.sender, category, academicYear);
     }
 
     // reviewCertificate() => when a student requests a certificate, the admin will call this function to approve/deny it
@@ -282,7 +295,7 @@ contract Unicerts {
         // add the new certificate id to the student's certificates ids array
         students[studentsIndexes[studentAddr] - 1].certificates.push(id);
 
-        emit ReviewCertificate(id);
+        emit ReviewCertificate(id, approve);
     }
 
     // issueCertificate() => when the admin issues the certificate without the student's request
@@ -325,7 +338,7 @@ contract Unicerts {
         // add the new certificate id to the student's certificates ids array
         students[studentsIndexes[student] - 1].certificates.push(id);
 
-        emit IssueCertificate(id);
+        emit IssueCertificate(id, student, category, academicYear);
     }
 
     function checkCertificateValidity(Certificate memory certificate)
