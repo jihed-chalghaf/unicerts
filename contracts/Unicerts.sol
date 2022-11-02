@@ -36,12 +36,13 @@ contract Unicerts {
     Student[] private students;
     Certificate[] private certificates;
 
-    bytes32[5] public CATEGORIES = [
+    bytes32[6] public CATEGORIES = [
         keccak256(abi.encodePacked("Transcript")),
         keccak256(abi.encodePacked("Participation")),
         keccak256(abi.encodePacked("Attendance")),
         keccak256(abi.encodePacked("Achievement")),
-        keccak256(abi.encodePacked("Graduation"))
+        keccak256(abi.encodePacked("Graduation")),
+        keccak256(abi.encodePacked("Inscription"))
     ];
 
     // should be someone trustworthy from the university's administration
@@ -164,7 +165,8 @@ contract Unicerts {
                 categoryHashBytes == CATEGORIES[1] ||
                 categoryHashBytes == CATEGORIES[2] ||
                 categoryHashBytes == CATEGORIES[3] ||
-                categoryHashBytes == CATEGORIES[4],
+                categoryHashBytes == CATEGORIES[4] ||
+                categoryHashBytes == CATEGORIES[5],
             "UNIPAPERS: INVALID_CATEGORY"
         );
 
