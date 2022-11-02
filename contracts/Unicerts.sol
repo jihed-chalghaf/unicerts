@@ -97,44 +97,45 @@ contract Unicerts {
     }
 
     // ⸻⸻⮞ Getters ⮜⸻⸻
-    function getCertificate(bytes32 certificateId)
+    /**
+     * @dev Returns a certificate's details.
+     * @param id The certificate's id to retrieve.
+     */
+    function getCertificate(bytes32 id)
         public
         view
         returns (Certificate memory)
     {
         require(
-            certificatesIndexes[certificateId] != 0,
+            certificatesIndexes[id] != 0,
             "UNIPAPERS: CERTIFICATE_NOT_FOUND"
         );
 
-        return certificates[certificatesIndexes[certificateId] - 1];
+        return certificates[certificatesIndexes[id] - 1];
     }
 
-    function getStudent(address studentAddr)
-        public
-        view
-        returns (Student memory)
-    {
-        require(
-            studentsIndexes[studentAddr] != 0,
-            "UNIPAPERS: STUDENT_NOT_FOUND"
-        );
+    /**
+     * @dev Returns a student's details.
+     * @param addr The student's address to retrieve.
+     */
+    function getStudent(address addr) public view returns (Student memory) {
+        require(studentsIndexes[addr] != 0, "UNIPAPERS: STUDENT_NOT_FOUND");
 
-        return students[studentsIndexes[studentAddr] - 1];
+        return students[studentsIndexes[addr] - 1];
     }
 
-    function isStudent() public view returns (bool) {
-        return studentsIndexes[msg.sender] != 0;
-    }
-
-    function isAdmin() public view returns (bool) {
-        return msg.sender == admin;
-    }
-
+    /**
+     * @dev Returns all the students' details.
+     * @return An array of students.
+     */
     function getStudents() public view onlyAdmin returns (Student[] memory) {
         return students;
     }
 
+    /**
+     * @dev Returns all the certificates' details. Only callable by the admin.
+     * @return An array of certificates.
+     */
     function getCertificates()
         public
         view
@@ -144,22 +145,27 @@ contract Unicerts {
         return certificates;
     }
 
-    function getStudentCertificates(address studentId)
+    /**
+     * @dev Returns all the certificates' details for the given student. Only callable by the admin or the student.
+     * @param studentAddr The student's address that we are trying to retrieve his certificates.
+     * @return An array of certificates.
+     */
+    function getStudentCertificates(address studentAddr)
         public
         view
         returns (Certificate[] memory)
     {
         require(
-            msg.sender == studentId || msg.sender == admin,
+            msg.sender == studentAddr || msg.sender == admin,
             "UNIPAPERS: ONLY_VALID_STUDENT_OR_ADMIN"
         );
         require(
-            studentsIndexes[studentId] != 0,
+            studentsIndexes[studentAddr] != 0,
             "UNIPAPERS: STUDENT_NOT_FOUND"
         );
 
         bytes32[] memory certificatesIds = students[
-            studentsIndexes[studentId] - 1
+            studentsIndexes[studentAddr] - 1
         ].certificates;
 
         Certificate[] memory studentCertificates = new Certificate[](
@@ -175,7 +181,11 @@ contract Unicerts {
         return studentCertificates;
     }
 
-    // returns certificates that share the provided category
+    /**
+     * @dev Returns all the certificates that share the provided category. Only callable by the admin.
+     * @param category The category we are trying to look for in the certificates.
+     * @return An array of certificates.
+     */
     function getCertificatesByCategory(string memory category)
         public
         view
@@ -199,6 +209,18 @@ contract Unicerts {
     }
 
     // ⸻⸻⮞ Logic Operations ⮜⸻⸻
+    /**
+     * @dev Registers a new student.
+     * @param firstName The student's first name.
+     * @param lastName The student's last name.
+     * @param email The student's email.
+     * @param speciality The student's speciality.
+     * @param birthDate The student's birth date.
+     * @param birthPlace The student's birth place.
+     * @param nin The student's national identification number.
+     * @param sid The student's identification number.
+     * @param certs The student's certificate.
+     */
     function addStudent(
         string memory firstName,
         string memory lastName,
@@ -239,6 +261,13 @@ contract Unicerts {
         emit AddStudent(msg.sender, nin, sid);
     }
 
+    /**
+     * @dev Requests a new certificate for the caller. Only callable by a registered student.
+     * @param category The certificate's category.
+     * @param academicYear The current academic year.
+     * @param hashedData The hashed data that may be included in case of a transcript certificate.
+     * @param issuedAt The timestamp when the certificate was intended to be acquired at.
+     */
     function requestCertificate(
         string memory category,
         string memory academicYear,
@@ -275,7 +304,11 @@ contract Unicerts {
         emit RequestCertificate(msg.sender, category, academicYear);
     }
 
-    // reviewCertificate() => when a student requests a certificate, the admin will call this function to approve/deny it
+    /**
+     * @dev Reviews a pending certificate request. Only callable by the admin.
+     * @param id The certificate's id.
+     * @param approve Whether to approve or deny the request.
+     */
     function reviewCertificate(bytes32 id, bool approve) public onlyAdmin {
         require(
             certificatesIndexes[id] != 0,
@@ -298,7 +331,14 @@ contract Unicerts {
         emit ReviewCertificate(id, approve);
     }
 
-    // issueCertificate() => when the admin issues the certificate without the student's request
+    /**
+     * @dev Issues a certificate for a given student. Only callable by the admin.
+     * @param student The student's address.
+     * @param category The certificate's category.
+     * @param academicYear The current academic year.
+     * @param hashedData The hashed data that may be included in case of a transcript certificate.
+     * @param issuedAt The timestamp when the certificate was intended to be acquired at.
+     */
     function issueCertificate(
         address student,
         string memory category,
@@ -341,6 +381,11 @@ contract Unicerts {
         emit IssueCertificate(id, student, category, academicYear);
     }
 
+    /**
+     * @dev Checks a certificate's validity.
+     * @param certificate The certificate to check its validity.
+     * @return Whether the given certificate is valid or not.
+     */
     function checkCertificateValidity(Certificate memory certificate)
         public
         view
