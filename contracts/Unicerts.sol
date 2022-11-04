@@ -71,12 +71,24 @@ contract Unicerts {
 
     /**
      * @dev Returns a student's details.
-     * @param addr The student's address to retrieve.
+     * @param studentAddr The student's address to retrieve.
      */
-    function getStudent(address addr) public view returns (Student memory) {
-        require(studentsIndexes[addr] != 0, "UNICERTS: STUDENT_NOT_FOUND");
+    function getStudent(address studentAddr)
+        public
+        view
+        returns (Student memory)
+    {
+        require(
+            msg.sender == studentAddr || msg.sender == admin,
+            "UNICERTS: ONLY_VALID_STUDENT_OR_ADMIN"
+        );
 
-        return students[studentsIndexes[addr] - 1];
+        require(
+            studentsIndexes[studentAddr] != 0,
+            "UNICERTS: STUDENT_NOT_FOUND"
+        );
+
+        return students[studentsIndexes[studentAddr] - 1];
     }
 
     /**
