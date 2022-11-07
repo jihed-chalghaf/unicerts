@@ -149,9 +149,8 @@ contract Unicerts {
     /**
      * @dev Registers a new student.
      * @param cid The student's CID on IPFS.
-     * @param certs The student's certificates.
      */
-    function addStudent(bytes32 cid, bytes32[] memory certs) public {
+    function addStudent(bytes32 cid) public {
         require(
             studentsIndexes[msg.sender] == 0,
             "UNICERTS: STUDENT_ALREADY_EXISTS"
@@ -163,6 +162,7 @@ contract Unicerts {
 
         studentsIndexes[msg.sender] = students.length + 1;
 
+        bytes32[] memory certs;
         students.push(Student(msg.sender, cid, certs));
 
         emit AddStudent(msg.sender, cid);
