@@ -80,68 +80,56 @@ describe("Unicerts", function () {
   });
 
   describe("addStudent", function () {
+    let studentCID: string;
+
     beforeEach(async () => {
       const fixture = await loadFixture(unicertsFixture);
 
       unicerts = fixture.unicerts;
-    });
 
-    it("should add student", async function () {
       const cid = await uploadFile(
         ipfs,
         students[0].sid,
         JSON.stringify(students[0])
       );
 
-      const bytes32CID = getBytes32FromCID(cid);
+      studentCID = getBytes32FromCID(cid);
+    });
 
-      const addStudentTx = await unicerts
-        .connect(acc1)
-        .addStudent(bytes32CID, []);
+    it("should add student", async function () {
+      const addStudentTx = await unicerts.connect(acc1).addStudent(studentCID);
 
       await expect(addStudentTx)
         .to.emit(unicerts, "AddStudent")
-        .withArgs(acc1.address, bytes32CID);
-
-      const receipt = await addStudentTx.wait();
-
-      expect(receipt.gasUsed).to.eq(118350, "gas should match"); // with full storage was 289702, with student cid as string => 165704
+        .withArgs(acc1.address, studentCID);
 
       const student = await unicerts.getStudent(acc1.address);
 
       expect(student.addr).to.eq(acc1.address, "address should match");
-      expect(student.cid).to.eq(bytes32CID, "cid should match");
+      expect(student.cid).to.eq(studentCID, "cid should match");
       expect(student.certsCIDs, "certs should be empty").to.be.empty;
     });
 
     it("should revert if student already exists", async function () {
-      const cid = await uploadFile(
-        ipfs,
-        students[0].sid,
-        JSON.stringify(students[0])
-      );
-
-      const bytes32CID = getBytes32FromCID(cid);
-
-      await unicerts.connect(acc1).addStudent(bytes32CID, []);
+      await unicerts.connect(acc1).addStudent(studentCID);
 
       await expect(
-        unicerts.connect(acc1).addStudent(bytes32CID, [])
+        unicerts.connect(acc1).addStudent(studentCID)
       ).to.be.revertedWith("UNICERTS: STUDENT_ALREADY_EXISTS");
     });
 
     it("should revert if sent by admin", async function () {
-      const cid = await uploadFile(
-        ipfs,
-        students[0].sid,
-        JSON.stringify(students[0])
-      );
-
-      const bytes32CID = getBytes32FromCID(cid);
-
-      await expect(unicerts.addStudent(bytes32CID, [])).to.be.revertedWith(
+      await expect(unicerts.addStudent(studentCID)).to.be.revertedWith(
         "UNICERTS: ADMIN_CANNOT_ENTROLL_AS_A_STUDENT"
       );
+    });
+
+    it("gas usage simulation [ @skip-on-coverage ]", async function () {
+      const addStudentTx = await unicerts.connect(acc1).addStudent(studentCID);
+
+      const receipt = await addStudentTx.wait();
+
+      expect(receipt.gasUsed).to.eq(117451, "gas should match"); // with full storage was 289702, with student cid as string => 165704
     });
   });
 
@@ -161,7 +149,7 @@ describe("Unicerts", function () {
 
       bytes32CID = getBytes32FromCID(cid);
 
-      await unicerts.connect(acc1).addStudent(bytes32CID, []);
+      await unicerts.connect(acc1).addStudent(bytes32CID);
     });
 
     it("should pass if called by the concerned student", async function () {
@@ -180,6 +168,12 @@ describe("Unicerts", function () {
       expect(addr).to.eq(acc1.address, "addr should match");
       expect(cid).to.eq(bytes32CID, "cid should match");
       expect(certs, "certs should match").to.be.empty;
+    });
+
+    it("should revert if called by an unauthorized account", async function () {
+      await expect(
+        unicerts.connect(acc2).getStudent(acc1.address)
+      ).to.be.revertedWith("UNICERTS: ONLY_VALID_STUDENT_OR_ADMIN");
     });
 
     it("should revert if student does not exist", async function () {
@@ -214,11 +208,11 @@ describe("Unicerts", function () {
       student2CID = getBytes32FromCID(cid2);
 
       // add the 2 students to the contract
-      await unicerts.connect(acc1).addStudent(student1CID, []);
-      await unicerts.connect(acc2).addStudent(student2CID, []);
+      await unicerts.connect(acc1).addStudent(student1CID);
+      await unicerts.connect(acc2).addStudent(student2CID);
     });
 
-    it("should retrieve studends when called by the admin", async function () {
+    it("should retrieve students when called by the admin", async function () {
       const [student1, student2] = await unicerts.getStudents();
 
       expect(student1.addr).to.eq(
@@ -245,6 +239,277 @@ describe("Unicerts", function () {
       await expect(unicerts.connect(acc1).getStudents()).to.be.revertedWith(
         "UNICERTS: ONLY_ADMIN"
       );
+    });
+  });
+
+  describe("requestCertificate", function () {
+    let studentCID: string;
+    let certCID: string;
+
+    beforeEach(async () => {
+      const fixture = await loadFixture(unicertsFixture);
+
+      unicerts = fixture.unicerts;
+
+      // upload the student & the certificate to IPFS
+      const studentCid = await uploadFile(
+        ipfs,
+        students[0].sid,
+        JSON.stringify(students[0])
+      );
+      const certCid = await uploadFile(
+        ipfs,
+        certs[0].id,
+        JSON.stringify(certs[0])
+      );
+
+      studentCID = getBytes32FromCID(studentCid);
+      certCID = getBytes32FromCID(certCid);
+
+      // add the student to the Unicerts contract
+      await unicerts.connect(acc1).addStudent(studentCID);
+    });
+
+    it("should pass when called by a student", async function () {
+      const requestCertTx = await unicerts
+        .connect(acc1)
+        .requestCertificate(certCID);
+
+      await expect(requestCertTx)
+        .to.emit(unicerts, "RequestCertificate")
+        .withArgs(acc1.address, certCID);
+
+      let cert = await unicerts.getCertificate(certCID);
+
+      expect(cert.cid).to.eq(certCID, "cid should match");
+      expect(cert.studentAddr).to.eq(
+        students[0].addr,
+        "student address should match"
+      ); // eq acc1.address
+      expect(cert.approved, "approved should match").to.be.false;
+      expect(cert.pending, "pending should match").to.be.true;
+    });
+
+    it("should revert otherwise", async function () {
+      await expect(unicerts.requestCertificate(certCID)).to.be.revertedWith(
+        "UNICERTS: ONLY_STUDENT"
+      );
+    });
+
+    it("gas usage simulation [ @skip-on-coverage ]", async function () {
+      const requestCertTx = await unicerts
+        .connect(acc1)
+        .requestCertificate(certCID);
+
+      const receipt = await requestCertTx.wait();
+
+      expect(receipt.gasUsed).to.eq(162555, "gas should match"); // was 115658 before pushing cid to student certsCIDs array
+    });
+  });
+
+  describe("getCertificate", function () {
+    let studentCID: string;
+    let certCID: string;
+
+    beforeEach(async () => {
+      const fixture = await loadFixture(unicertsFixture);
+
+      unicerts = fixture.unicerts;
+
+      // upload the student & the certificate to IPFS
+      const studentCid = await uploadFile(
+        ipfs,
+        students[0].sid,
+        JSON.stringify(students[0])
+      );
+      const certCid = await uploadFile(
+        ipfs,
+        certs[0].id,
+        JSON.stringify(certs[0])
+      );
+
+      studentCID = getBytes32FromCID(studentCid);
+      certCID = getBytes32FromCID(certCid);
+
+      // add the student & his certificate to the Unicerts contract
+      await unicerts.connect(acc1).addStudent(studentCID);
+      await unicerts.connect(acc1).requestCertificate(certCID);
+    });
+
+    it("should get existing certificate", async function () {
+      let cert = await unicerts.getCertificate(certCID);
+
+      expect(cert.cid).to.eq(certCID, "cid should match");
+      expect(cert.studentAddr).to.eq(
+        students[0].addr,
+        "student address should match"
+      ); // eq acc1.address
+      expect(cert.approved, "approved should match").to.be.false;
+      expect(cert.pending, "pending should match").to.be.true;
+    });
+
+    it("should revert if certificate does not exist", async function () {
+      await expect(unicerts.getCertificate(studentCID)).to.be.revertedWith(
+        "UNICERTS: CERTIFICATE_NOT_FOUND"
+      );
+    });
+  });
+
+  describe("getCertificates", function () {
+    let studentCID: string;
+    let certCID: string;
+
+    beforeEach(async () => {
+      const fixture = await loadFixture(unicertsFixture);
+
+      unicerts = fixture.unicerts;
+
+      // upload the student & the certificate to IPFS
+      const studentCid = await uploadFile(
+        ipfs,
+        students[0].sid,
+        JSON.stringify(students[0])
+      );
+      const certCid = await uploadFile(
+        ipfs,
+        certs[0].id,
+        JSON.stringify(certs[0])
+      );
+
+      studentCID = getBytes32FromCID(studentCid);
+      certCID = getBytes32FromCID(certCid);
+
+      // add the student & his certificate to the Unicerts contract
+      await unicerts.connect(acc1).addStudent(studentCID);
+      await unicerts.connect(acc1).requestCertificate(certCID);
+    });
+
+    it("should pass when called by the admin", async function () {
+      const [cert] = await unicerts.getCertificates();
+
+      expect(cert.cid).to.eq(certCID, "cid should match");
+      expect(cert.studentAddr).to.eq(
+        students[0].addr,
+        "student address should match"
+      ); // eq acc1.address
+      expect(cert.approved, "approved should match").to.be.false;
+      expect(cert.pending, "pending should match").to.be.true;
+    });
+
+    it("should revert otherwise", async function () {
+      await expect(unicerts.connect(acc1).getCertificates()).to.be.revertedWith(
+        "UNICERTS: ONLY_ADMIN"
+      );
+    });
+  });
+
+  describe("getStudentCertificates", function () {
+    let student1CID: string;
+    let student2CID: string;
+    let cert1CID: string;
+    let cert2CID: string;
+
+    beforeEach(async () => {
+      const fixture = await loadFixture(unicertsFixture);
+
+      unicerts = fixture.unicerts;
+
+      // upload the students & the certificates to IPFS
+      const student1Cid = await uploadFile(
+        ipfs,
+        students[0].sid,
+        JSON.stringify(students[0])
+      );
+      const student2Cid = await uploadFile(
+        ipfs,
+        students[1].sid,
+        JSON.stringify(students[1])
+      );
+      const cert1Cid = await uploadFile(
+        ipfs,
+        certs[0].id,
+        JSON.stringify(certs[0])
+      );
+      const cert2Cid = await uploadFile(
+        ipfs,
+        certs[1].id,
+        JSON.stringify(certs[1])
+      );
+
+      student1CID = getBytes32FromCID(student1Cid);
+      student2CID = getBytes32FromCID(student2Cid);
+      cert1CID = getBytes32FromCID(cert1Cid);
+      cert2CID = getBytes32FromCID(cert2Cid);
+
+      // add the students & their certificates to the Unicerts contract
+      await unicerts.connect(acc1).addStudent(student1CID);
+      await unicerts.connect(acc2).addStudent(student2CID);
+      await unicerts.connect(acc1).requestCertificate(cert1CID);
+      await unicerts.connect(acc2).requestCertificate(cert2CID);
+    });
+
+    it("should get certs when called by the admin", async function () {
+      const [student1Cert] = await unicerts.getStudentCertificates(
+        students[0].addr
+      );
+
+      expect(student1Cert.cid).to.eq(cert1CID, "first cid should match");
+      expect(student1Cert.studentAddr).to.eq(
+        students[0].addr,
+        "first student address should match"
+      ); // eq acc1.address
+      expect(student1Cert.approved, "first approved should match").to.be.false;
+      expect(student1Cert.pending, "first pending should match").to.be.true;
+
+      const [student2Cert] = await unicerts.getStudentCertificates(
+        students[1].addr
+      );
+
+      expect(student2Cert.cid).to.eq(cert2CID, "second cid should match");
+      expect(student2Cert.studentAddr).to.eq(
+        students[1].addr,
+        "second student address should match"
+      ); // eq acc2.address
+      expect(student2Cert.approved, "second approved should match").to.be.false;
+      expect(student2Cert.pending, "second pending should match").to.be.true;
+    });
+
+    it("should get certs when called by the concerned student", async function () {
+      const [student1Cert] = await unicerts
+        .connect(acc1)
+        .getStudentCertificates(students[0].addr);
+
+      expect(student1Cert.cid).to.eq(cert1CID, "first cid should match");
+      expect(student1Cert.studentAddr).to.eq(
+        students[0].addr,
+        "first student address should match"
+      ); // eq acc1.address
+      expect(student1Cert.approved, "first approved should match").to.be.false;
+      expect(student1Cert.pending, "first pending should match").to.be.true;
+
+      const [student2Cert] = await unicerts
+        .connect(acc2)
+        .getStudentCertificates(students[1].addr);
+
+      expect(student2Cert.cid).to.eq(cert2CID, "second cid should match");
+      expect(student2Cert.studentAddr).to.eq(
+        students[1].addr,
+        "second student address should match"
+      ); // eq acc2.address
+      expect(student2Cert.approved, "second approved should match").to.be.false;
+      expect(student2Cert.pending, "second pending should match").to.be.true;
+    });
+
+    it("should revert when called by unauthorized user", async function () {
+      await expect(
+        unicerts.connect(acc2).getStudentCertificates(acc1.address)
+      ).to.be.revertedWith("UNICERTS: ONLY_VALID_STUDENT_OR_ADMIN");
+    });
+
+    it("should revert if student does not exist", async function () {
+      await expect(
+        unicerts.getStudentCertificates(deployer.address)
+      ).to.be.revertedWith("UNICERTS: STUDENT_NOT_FOUND");
     });
   });
 });
