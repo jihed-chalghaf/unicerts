@@ -44,10 +44,7 @@ contract Unicerts {
     }
 
     modifier onlyStudent() {
-        require(
-            studentsIndexes[msg.sender] != 0,
-            "UNICERTS: STUDENT_NOT_FOUND"
-        );
+        require(studentsIndexes[msg.sender] != 0, "UNICERTS: ONLY_STUDENT");
         _;
     }
 
@@ -176,6 +173,9 @@ contract Unicerts {
         certificatesIndexes[cid] = certificates.length + 1;
         certificates.push(Certificate(cid, msg.sender, false, true));
 
+        // add the new certificate id to the student's certificates ids array
+        students[studentsIndexes[msg.sender] - 1].certsCIDs.push(cid);
+
         emit RequestCertificate(msg.sender, cid);
     }
 
@@ -187,7 +187,7 @@ contract Unicerts {
     function reviewCertificate(bytes32 cid, bool approve) public onlyAdmin {
         require(
             certificatesIndexes[cid] != 0,
-            "UNICERTS: CERTIFICATE_REQUEST_DOES_NOT_EXIST"
+            "UNICERTS: CERTIFICATE_DOES_NOT_EXIST"
         );
         require(
             certificates[certificatesIndexes[cid] - 1].pending,
@@ -196,12 +196,6 @@ contract Unicerts {
 
         certificates[certificatesIndexes[cid] - 1].approved = approve;
         certificates[certificatesIndexes[cid] - 1].pending = false;
-
-        address studentAddr = certificates[certificatesIndexes[cid] - 1]
-            .studentAddr;
-
-        // add the new certificate id to the student's certificates ids array
-        students[studentsIndexes[studentAddr] - 1].certsCIDs.push(cid);
 
         emit ReviewCertificate(cid, approve);
     }
@@ -213,6 +207,10 @@ contract Unicerts {
      */
     function issueCertificate(address student, bytes32 cid) public onlyAdmin {
         require(studentsIndexes[student] != 0, "UNICERTS: STUDENT_NOT_FOUND");
+        require(
+            certificatesIndexes[cid] == 0,
+            "UNICERTS: CERTIFICATE_ALREADY_EXISTS"
+        );
 
         certificatesIndexes[cid] = certificates.length + 1;
 
