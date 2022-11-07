@@ -170,6 +170,11 @@ contract Unicerts {
      * @param cid The certificate's CID.
      */
     function requestCertificate(bytes32 cid) public onlyStudent {
+        require(
+            certificatesIndexes[cid] == 0,
+            "UNICERTS: CERTIFICATE_ALREADY_EXISTS"
+        );
+
         certificatesIndexes[cid] = certificates.length + 1;
         certificates.push(Certificate(cid, msg.sender, false, true));
 
