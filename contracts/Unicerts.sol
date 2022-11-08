@@ -131,13 +131,15 @@ contract Unicerts {
         bytes32[] storage certsCIDs = students[studentsIndexes[studentAddr] - 1]
             .certsCIDs;
 
-        Certificate[] memory studentCerts = new Certificate[](certsCIDs.length);
+        uint256 certsCount = certsCIDs.length;
 
-        for (uint256 i = 0; i < certsCIDs.length; ) {
-            studentCerts[i] = certificates[
-                certificatesIndexes[certsCIDs[i]] - 1
-            ];
-            unchecked {
+        Certificate[] memory studentCerts = new Certificate[](certsCount);
+
+        unchecked {
+            for (uint256 i = 0; i < certsCount; ) {
+                studentCerts[i] = certificates[
+                    certificatesIndexes[certsCIDs[i]] - 1
+                ];
                 i++;
             }
         }
