@@ -128,7 +128,7 @@ contract Unicerts {
             "UNICERTS: STUDENT_NOT_FOUND"
         );
 
-        bytes32[] storage certsCIDs = students[studentsIndexes[studentAddr] - 1]
+        bytes32[] memory certsCIDs = students[studentsIndexes[studentAddr] - 1]
             .certsCIDs;
 
         uint256 certsCount = certsCIDs.length;
