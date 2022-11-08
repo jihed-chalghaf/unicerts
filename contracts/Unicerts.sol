@@ -128,15 +128,18 @@ contract Unicerts {
             "UNICERTS: STUDENT_NOT_FOUND"
         );
 
-        bytes32[] memory certsCIDs = students[studentsIndexes[studentAddr] - 1]
+        bytes32[] storage certsCIDs = students[studentsIndexes[studentAddr] - 1]
             .certsCIDs;
 
         Certificate[] memory studentCerts = new Certificate[](certsCIDs.length);
 
-        for (uint256 i = 0; i < certsCIDs.length; i++) {
+        for (uint256 i = 0; i < certsCIDs.length; ) {
             studentCerts[i] = certificates[
                 certificatesIndexes[certsCIDs[i]] - 1
             ];
+            unchecked {
+                i++;
+            }
         }
 
         return studentCerts;
