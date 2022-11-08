@@ -129,7 +129,7 @@ describe("Unicerts", function () {
 
       const receipt = await addStudentTx.wait();
 
-      expect(receipt.gasUsed).to.eq(117451, "gas should match"); // with full storage was 289702, with student cid as string => 165704
+      expect(receipt.gasUsed).to.eq(116725, "gas should match"); // with full storage was 289702, with student cid as string => 165704
     });
   });
 
@@ -303,7 +303,7 @@ describe("Unicerts", function () {
 
       const receipt = await requestCertTx.wait();
 
-      expect(receipt.gasUsed).to.eq(162656, "gas should match"); // was 115658 before pushing cid to student certsCIDs array & adding check
+      expect(receipt.gasUsed).to.eq(161231, "gas should match"); // was 115658 before pushing cid to student certsCIDs array & adding check
     });
   });
 
@@ -589,7 +589,7 @@ describe("Unicerts", function () {
 
       const receipt = await reviewCertTx.wait();
 
-      expect(receipt.gasUsed).to.eq(37554, "gas should match");
+      expect(receipt.gasUsed).to.eq(36686, "gas should match");
     });
   });
 
@@ -686,7 +686,7 @@ describe("Unicerts", function () {
 
       let receipt = await issueCertTx.wait();
 
-      expect(receipt.gasUsed).to.eq(165354, "gas should match");
+      expect(receipt.gasUsed).to.eq(163837, "gas should match");
 
       const cert2Cid = await uploadFile(
         ipfs,
@@ -704,7 +704,7 @@ describe("Unicerts", function () {
 
       receipt = await issueCertTx.wait();
 
-      expect(receipt.gasUsed).to.eq(131154, "gas should match");
+      expect(receipt.gasUsed).to.eq(129637, "gas should match");
     });
   });
 
