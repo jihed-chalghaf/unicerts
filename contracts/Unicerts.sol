@@ -1,33 +1,21 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.9;
+pragma solidity 0.8.16;
 
 // Uncomment this line to use console.log
 // import "hardhat/console.sol";
 
 contract Unicerts {
     struct Certificate {
-        bytes32 id;
-        string category;
-        address owner;
-        address issuer;
-        string academicYear;
-        bytes32 hashedData; // this attribute will be used only in the case of transcripts
-        bool approved; // if it's resulting from a student's request, it must be validated by the admin
+        bytes32 cid; // any change to the certificate on IPFS will produce a different cid
+        address studentAddr;
+        bool approved;
         bool pending;
-        uint256 issuedAt; // timestamps format
     }
 
     struct Student {
         address addr;
-        string firstName;
-        string lastName;
-        string email;
-        string speciality;
-        string birthDate;
-        string birthPlace;
-        string nin; // national identification number
-        string sid; // student identification number
-        bytes32[] certificates;
+        bytes32 cid; // CID of the file containing the student's full data in IPFS
+        bytes32[] certsCIDs; // CIDs of the student's certs
     }
 
     mapping(address => uint256) private studentsIndexes;
@@ -35,15 +23,6 @@ contract Unicerts {
 
     Student[] private students;
     Certificate[] private certificates;
-
-    bytes32[6] public CATEGORIES = [
-        keccak256(abi.encodePacked("Transcript")),
-        keccak256(abi.encodePacked("Participation")),
-        keccak256(abi.encodePacked("Attendance")),
-        keccak256(abi.encodePacked("Achievement")),
-        keccak256(abi.encodePacked("Graduation")),
-        keccak256(abi.encodePacked("Inscription"))
-    ];
 
     // should be someone trustworthy from the university's administration
     address public admin;
@@ -53,75 +32,60 @@ contract Unicerts {
     }
 
     // ⸻⸻⮞ Events ⮜⸻⸻
-    event RequestCertificate(
-        address student,
-        string category,
-        string academicYear
-    );
-    event IssueCertificate(
-        bytes32 id,
-        address student,
-        string category,
-        string academicYear
-    );
-    event ReviewCertificate(bytes32 id, bool approve);
-    event AddStudent(address addr, string nin, string sid);
+    event RequestCertificate(address studentAddr, bytes32 certCid);
+    event IssueCertificate(bytes32 certCid, address studentAddr);
+    event ReviewCertificate(bytes32 certCid, bool approve);
+    event AddStudent(address studentAddr, bytes32 studentCid);
 
     // ⸻⸻⮞ Modifiers ⮜⸻⸻
     modifier onlyAdmin() {
-        require(msg.sender == admin, "UNIPAPERS: ONLY_ADMIN");
+        require(msg.sender == admin, "UNICERTS: ONLY_ADMIN");
         _;
     }
 
     modifier onlyStudent() {
-        require(
-            studentsIndexes[msg.sender] != 0,
-            "UNIPAPERS: STUDENT_NOT_FOUND"
-        );
-        _;
-    }
-
-    modifier validCategory(string memory category) {
-        bytes32 categoryHashBytes = keccak256(abi.encodePacked(category));
-
-        require(
-            categoryHashBytes == CATEGORIES[0] ||
-                categoryHashBytes == CATEGORIES[1] ||
-                categoryHashBytes == CATEGORIES[2] ||
-                categoryHashBytes == CATEGORIES[3] ||
-                categoryHashBytes == CATEGORIES[4] ||
-                categoryHashBytes == CATEGORIES[5],
-            "UNIPAPERS: INVALID_CATEGORY"
-        );
+        require(studentsIndexes[msg.sender] != 0, "UNICERTS: ONLY_STUDENT");
         _;
     }
 
     // ⸻⸻⮞ Getters ⮜⸻⸻
     /**
      * @dev Returns a certificate's details.
-     * @param id The certificate's id to retrieve.
+     * @param cid The certificate's id to retrieve.
      */
-    function getCertificate(bytes32 id)
+    function getCertificate(bytes32 cid)
         public
         view
         returns (Certificate memory)
     {
         require(
-            certificatesIndexes[id] != 0,
-            "UNIPAPERS: CERTIFICATE_NOT_FOUND"
+            certificatesIndexes[cid] != 0,
+            "UNICERTS: CERTIFICATE_NOT_FOUND"
         );
 
-        return certificates[certificatesIndexes[id] - 1];
+        return certificates[certificatesIndexes[cid] - 1];
     }
 
     /**
      * @dev Returns a student's details.
-     * @param addr The student's address to retrieve.
+     * @param studentAddr The student's address to retrieve.
      */
-    function getStudent(address addr) public view returns (Student memory) {
-        require(studentsIndexes[addr] != 0, "UNIPAPERS: STUDENT_NOT_FOUND");
+    function getStudent(address studentAddr)
+        public
+        view
+        returns (Student memory)
+    {
+        require(
+            msg.sender == studentAddr || msg.sender == admin,
+            "UNICERTS: ONLY_VALID_STUDENT_OR_ADMIN"
+        );
 
-        return students[studentsIndexes[addr] - 1];
+        require(
+            studentsIndexes[studentAddr] != 0,
+            "UNICERTS: STUDENT_NOT_FOUND"
+        );
+
+        return students[studentsIndexes[studentAddr] - 1];
     }
 
     /**
@@ -157,264 +121,128 @@ contract Unicerts {
     {
         require(
             msg.sender == studentAddr || msg.sender == admin,
-            "UNIPAPERS: ONLY_VALID_STUDENT_OR_ADMIN"
+            "UNICERTS: ONLY_VALID_STUDENT_OR_ADMIN"
         );
         require(
             studentsIndexes[studentAddr] != 0,
-            "UNIPAPERS: STUDENT_NOT_FOUND"
+            "UNICERTS: STUDENT_NOT_FOUND"
         );
 
-        bytes32[] memory certificatesIds = students[
-            studentsIndexes[studentAddr] - 1
-        ].certificates;
+        bytes32[] memory certsCIDs = students[studentsIndexes[studentAddr] - 1]
+            .certsCIDs;
 
-        Certificate[] memory studentCertificates = new Certificate[](
-            certificatesIds.length
-        );
+        uint256 certsCount = certsCIDs.length;
 
-        for (uint256 i = 0; i < certificatesIds.length; i++) {
-            studentCertificates[i] = certificates[
-                certificatesIndexes[certificatesIds[i]] - 1
-            ];
-        }
+        Certificate[] memory studentCerts = new Certificate[](certsCount);
 
-        return studentCertificates;
-    }
-
-    /**
-     * @dev Returns all the certificates that share the provided category. Only callable by the admin.
-     * @param category The category we are trying to look for in the certificates.
-     * @return An array of certificates.
-     */
-    function getCertificatesByCategory(string memory category)
-        public
-        view
-        onlyAdmin
-        validCategory(category)
-        returns (Certificate[] memory)
-    {
-        Certificate[] memory _certificates;
-        uint256 j = 0;
-
-        for (uint256 i = 0; i < certificates.length; i++) {
-            if (
-                keccak256(abi.encodePacked(certificates[i].category)) ==
-                keccak256(abi.encodePacked(category))
-            ) {
-                _certificates[j++] = certificates[i];
+        unchecked {
+            for (uint256 i = 0; i < certsCount; ) {
+                studentCerts[i] = certificates[
+                    certificatesIndexes[certsCIDs[i]] - 1
+                ];
+                i++;
             }
         }
 
-        return _certificates;
+        return studentCerts;
     }
 
     // ⸻⸻⮞ Logic Operations ⮜⸻⸻
     /**
      * @dev Registers a new student.
-     * @param firstName The student's first name.
-     * @param lastName The student's last name.
-     * @param email The student's email.
-     * @param speciality The student's speciality.
-     * @param birthDate The student's birth date.
-     * @param birthPlace The student's birth place.
-     * @param nin The student's national identification number.
-     * @param sid The student's identification number.
-     * @param certs The student's certificate.
+     * @param cid The student's CID on IPFS.
      */
-    function addStudent(
-        string memory firstName,
-        string memory lastName,
-        string memory email,
-        string memory speciality,
-        string memory birthDate,
-        string memory birthPlace,
-        string memory nin,
-        string memory sid,
-        bytes32[] memory certs
-    ) public {
+    function addStudent(bytes32 cid) public {
         require(
             studentsIndexes[msg.sender] == 0,
-            "UNIPAPERS: STUDENT_ALREADY_EXISTS"
+            "UNICERTS: STUDENT_ALREADY_EXISTS"
         );
         require(
             msg.sender != admin,
-            "UNIPAPERS: ADMIN_CANNOT_ENTROLL_AS_A_STUDENT"
+            "UNICERTS: ADMIN_CANNOT_ENTROLL_AS_A_STUDENT"
         );
 
         studentsIndexes[msg.sender] = students.length + 1;
 
-        students.push(
-            Student(
-                msg.sender,
-                firstName,
-                lastName,
-                email,
-                speciality,
-                birthDate,
-                birthPlace,
-                nin,
-                sid,
-                certs
-            )
-        );
+        bytes32[] memory certs;
+        students.push(Student(msg.sender, cid, certs));
 
-        emit AddStudent(msg.sender, nin, sid);
+        emit AddStudent(msg.sender, cid);
     }
 
     /**
      * @dev Requests a new certificate for the caller. Only callable by a registered student.
-     * @param category The certificate's category.
-     * @param academicYear The current academic year.
-     * @param hashedData The hashed data that may be included in case of a transcript certificate.
-     * @param issuedAt The timestamp when the certificate was intended to be acquired at.
+     * @param cid The certificate's CID.
      */
-    function requestCertificate(
-        string memory category,
-        string memory academicYear,
-        bytes32 hashedData,
-        uint256 issuedAt
-    ) public onlyStudent validCategory(category) {
-        // generate a unique hash identifier for each certificate
-        bytes32 id = keccak256(
-            abi.encodePacked(
-                msg.sender,
-                admin,
-                category,
-                academicYear,
-                hashedData,
-                issuedAt
-            )
+    function requestCertificate(bytes32 cid) public onlyStudent {
+        require(
+            certificatesIndexes[cid] == 0,
+            "UNICERTS: CERTIFICATE_ALREADY_EXISTS"
         );
 
-        certificatesIndexes[id] = certificates.length + 1;
-        certificates.push(
-            Certificate(
-                id,
-                category,
-                msg.sender,
-                admin,
-                academicYear,
-                hashedData,
-                false,
-                true,
-                issuedAt
-            )
-        );
+        certificatesIndexes[cid] = certificates.length + 1;
+        certificates.push(Certificate(cid, msg.sender, false, true));
 
-        emit RequestCertificate(msg.sender, category, academicYear);
+        // add the new certificate id to the student's certificates ids array
+        students[studentsIndexes[msg.sender] - 1].certsCIDs.push(cid);
+
+        emit RequestCertificate(msg.sender, cid);
     }
 
     /**
      * @dev Reviews a pending certificate request. Only callable by the admin.
-     * @param id The certificate's id.
+     * @param cid The certificate's id.
      * @param approve Whether to approve or deny the request.
      */
-    function reviewCertificate(bytes32 id, bool approve) public onlyAdmin {
+    function reviewCertificate(bytes32 cid, bool approve) public onlyAdmin {
         require(
-            certificatesIndexes[id] != 0,
-            "UNIPAPERS: CERTIFICATE_REQUEST_DOES_NOT_EXIST"
+            certificatesIndexes[cid] != 0,
+            "UNICERTS: CERTIFICATE_DOES_NOT_EXIST"
         );
         require(
-            certificates[certificatesIndexes[id] - 1].pending,
-            "UNIPAPERS: CERTIFICATE_IS_NOT_PENDING"
+            certificates[certificatesIndexes[cid] - 1].pending,
+            "UNICERTS: CERTIFICATE_IS_NOT_PENDING"
         );
 
-        certificates[certificatesIndexes[id] - 1].approved = approve;
-        certificates[certificatesIndexes[id] - 1].pending = false;
+        certificates[certificatesIndexes[cid] - 1].approved = approve;
+        certificates[certificatesIndexes[cid] - 1].pending = false;
 
-        // get the student (owner) address
-        address studentAddr = certificates[certificatesIndexes[id] - 1].owner;
-
-        // add the new certificate id to the student's certificates ids array
-        students[studentsIndexes[studentAddr] - 1].certificates.push(id);
-
-        emit ReviewCertificate(id, approve);
+        emit ReviewCertificate(cid, approve);
     }
 
     /**
      * @dev Issues a certificate for a given student. Only callable by the admin.
      * @param student The student's address.
-     * @param category The certificate's category.
-     * @param academicYear The current academic year.
-     * @param hashedData The hashed data that may be included in case of a transcript certificate.
-     * @param issuedAt The timestamp when the certificate was intended to be acquired at.
+     * @param cid The certificate's CID.
      */
-    function issueCertificate(
-        address student,
-        string memory category,
-        string memory academicYear,
-        bytes32 hashedData,
-        uint256 issuedAt
-    ) public onlyAdmin {
-        require(studentsIndexes[student] != 0, "UNIPAPERS: STUDENT_NOT_FOUND");
-
-        // generate a unique hash identifier for each certificate
-        bytes32 id = keccak256(
-            abi.encodePacked(
-                student,
-                admin,
-                category,
-                academicYear,
-                hashedData,
-                issuedAt
-            )
+    function issueCertificate(address student, bytes32 cid) public onlyAdmin {
+        require(studentsIndexes[student] != 0, "UNICERTS: STUDENT_NOT_FOUND");
+        require(
+            certificatesIndexes[cid] == 0,
+            "UNICERTS: CERTIFICATE_ALREADY_EXISTS"
         );
 
-        certificatesIndexes[id] = certificates.length + 1;
+        certificatesIndexes[cid] = certificates.length + 1;
 
-        certificates.push(
-            Certificate(
-                id,
-                category,
-                student,
-                admin,
-                academicYear,
-                hashedData,
-                true,
-                false,
-                issuedAt
-            )
-        );
+        certificates.push(Certificate(cid, student, true, false));
+
         // add the new certificate id to the student's certificates ids array
-        students[studentsIndexes[student] - 1].certificates.push(id);
+        students[studentsIndexes[student] - 1].certsCIDs.push(cid);
 
-        emit IssueCertificate(id, student, category, academicYear);
+        emit IssueCertificate(cid, student);
     }
 
     /**
      * @dev Checks a certificate's validity.
-     * @param certificate The certificate to check its validity.
+     * @param cid The certificate's CID to check its validity.
      * @return Whether the given certificate is valid or not.
      */
-    function checkCertificateValidity(Certificate memory certificate)
-        public
-        view
-        returns (bool)
-    {
+    function checkCertificateValidity(bytes32 cid) public view returns (bool) {
         require(
-            certificatesIndexes[certificate.id] != 0,
-            "UNIPAPERS: CERTIFICATE_NOT_FOUND"
+            certificatesIndexes[cid] != 0,
+            "UNICERTS: CERTIFICATE_NOT_FOUND"
         );
 
-        Certificate storage storedCertificate = certificates[
-            certificatesIndexes[certificate.id] - 1
-        ];
-        bool valid_hash = true;
-
-        if (certificate.hashedData != 0x0) {
-            valid_hash = certificate.hashedData == storedCertificate.hashedData;
-        }
-
-        return
-            (keccak256(abi.encodePacked(certificate.category)) ==
-                keccak256(abi.encodePacked((storedCertificate.category))) &&
-                certificate.owner == storedCertificate.owner &&
-                certificate.issuer == storedCertificate.issuer &&
-                keccak256(abi.encodePacked(certificate.academicYear)) ==
-                keccak256(abi.encodePacked(storedCertificate.academicYear)) &&
-                certificate.issuedAt == storedCertificate.issuedAt &&
-                certificate.hashedData == storedCertificate.hashedData &&
-                certificate.approved == storedCertificate.approved) &&
-            valid_hash;
+        return (certificates[certificatesIndexes[cid] - 1].approved);
     }
 }
