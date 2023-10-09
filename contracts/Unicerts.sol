@@ -25,7 +25,7 @@ contract Unicerts {
     Certificate[] private certificates;
 
     // should be someone trustworthy from the university's administration
-    address public admin;
+    address public immutable admin;
 
     constructor() {
         admin = msg.sender; // specifiy the admin when deploying the contract;
