@@ -158,7 +158,7 @@ contract Unicerts {
 
         studentsIndexes[msg.sender] = students.length + 1;
 
-        bytes32[] memory certs;
+        bytes32[] memory certs = new bytes32[](0);
         students.push(Student(msg.sender, cid, certs));
 
         emit AddStudent(msg.sender, cid);
