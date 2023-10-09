@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.16;
+pragma solidity 0.8.18;
 
 // Uncomment this line to use console.log
 // import "hardhat/console.sol";
@@ -53,11 +53,9 @@ contract Unicerts {
      * @dev Returns a certificate's details.
      * @param cid The certificate's id to retrieve.
      */
-    function getCertificate(bytes32 cid)
-        public
-        view
-        returns (Certificate memory)
-    {
+    function getCertificate(
+        bytes32 cid
+    ) public view returns (Certificate memory) {
         require(
             certificatesIndexes[cid] != 0,
             "UNICERTS: CERTIFICATE_NOT_FOUND"
@@ -70,11 +68,9 @@ contract Unicerts {
      * @dev Returns a student's details.
      * @param studentAddr The student's address to retrieve.
      */
-    function getStudent(address studentAddr)
-        public
-        view
-        returns (Student memory)
-    {
+    function getStudent(
+        address studentAddr
+    ) public view returns (Student memory) {
         require(
             msg.sender == studentAddr || msg.sender == admin,
             "UNICERTS: ONLY_VALID_STUDENT_OR_ADMIN"
@@ -114,11 +110,9 @@ contract Unicerts {
      * @param studentAddr The student's address that we are trying to retrieve his certificates.
      * @return An array of certificates.
      */
-    function getStudentCertificates(address studentAddr)
-        public
-        view
-        returns (Certificate[] memory)
-    {
+    function getStudentCertificates(
+        address studentAddr
+    ) public view returns (Certificate[] memory) {
         require(
             msg.sender == studentAddr || msg.sender == admin,
             "UNICERTS: ONLY_VALID_STUDENT_OR_ADMIN"
