@@ -288,9 +288,13 @@ describe("Unicerts", function () {
       ); // eq acc1.address
       expect(cert.approved, "approved should match").to.be.false;
       expect(cert.pending, "pending should match").to.be.true;
+    
+      await expect(unicerts.connect(acc1).requestCertificate(certCID)).to.be.revertedWith(
+        "UNICERTS: CERTIFICATE_ALREADY_EXISTS"
+      );
     });
 
-    it("should revert otherwise", async function () {
+    it("should revert when called by a non-student", async function () {
       await expect(unicerts.requestCertificate(certCID)).to.be.revertedWith(
         "UNICERTS: ONLY_STUDENT"
       );
