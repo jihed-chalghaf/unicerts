@@ -1,7 +1,7 @@
 
 # Unicerts
 
-[![Actions Status](https://github.com/jihed-chalghaf/unicerts/workflows/CI/badge.svg)](https://github.com/jihed-chalghaf/unicerts/actions)
+[![Tests](https://github.com/jihed-chalghaf/unicerts/workflows/tests/badge.svg)](https://github.com/jihed-chalghaf/unicerts/actions)
 
 ![Coverage](./coverage/badges.svg)
 
