@@ -39,7 +39,7 @@ jobs:
         run: yarn coverage
 
       - name: Install coverage-badges-cli
-        run: yarn install coverage-badges-cli
+        run: yarn add coverage-badges-cli
 
       - name: Create Coverage Badges
         uses: jaywcjlove/coverage-badges-cli@main
