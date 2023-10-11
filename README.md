@@ -3,6 +3,8 @@
 
 [![Actions Status](https://github.com/jihed-chalghaf/unicerts/workflows/CI/badge.svg)](https://github.com/jihed-chalghaf/unicerts/actions)
 
+[![cov](https://jihed-chalghaf.github.io/unicerts/badges/coverage.svg)](https://github.com/jihed-chalghaf/unicerts/actions)
+
 ## ☆ Overview
 
 A smart contract that manages issuing & verifying university certificates, built on the Ethereum Blockchain using Solidity.
