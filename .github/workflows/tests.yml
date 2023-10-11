@@ -45,7 +45,7 @@ jobs:
         uses: jaywcjlove/coverage-badges-cli@main
         with:
           style: flat
-          source: coverage/coverage-final.json
+          source: coverage/coverage-summary.json
           output: coverage/badges.svg
 
       - name: Deploy
