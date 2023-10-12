@@ -2,7 +2,7 @@
 # Unicerts
 
 [![Tests](https://github.com/jihed-chalghaf/unicerts/workflows/tests/badge.svg)](https://github.com/jihed-chalghaf/unicerts/actions/workflows/tests.yml)
-![Coverage](./coverage/badges.svg)
+[![cov](https://jihed-chalghaf.github.io/unicerts/badges/coverage.svg)](https://github.com/jihed-chalghaf/unicerts/actions)
 
 ## ☆ Overview
 
