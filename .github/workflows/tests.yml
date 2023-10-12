@@ -44,12 +44,12 @@ jobs:
       - name: Create Coverage Badges
         uses: jaywcjlove/coverage-badges-cli@main
         with:
-          style: flat
           source: coverage/coverage-summary.json
           output: coverage/badges.svg
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
+        if: github.ref == 'refs/heads/master'
         with:
           github_token: ${{ secrets.SEC_TOKEN }}
-          publish_dir: ./build
+          publish_dir: ./coverage
