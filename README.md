@@ -1,8 +1,14 @@
 
 # Unicerts
 
-[![Tests](https://github.com/jihed-chalghaf/unicerts/workflows/tests/badge.svg)](https://github.com/jihed-chalghaf/unicerts/actions/workflows/tests.yml)
-[![cov](https://jihed-chalghaf.github.io/unicerts/badges/coverage.svg)](https://github.com/jihed-chalghaf/unicerts/actions)
+[![License][license-image]][license] [![Tests][tests-image]][tests-workflow] [![cov][cov-image]][repo-actions]
+
+[license-image]: https://img.shields.io/badge/license-BSD-green.svg
+[license]: https://github.com/jihed-chalghaf/unicerts/blob/master/jihed-chalghaf/LICENSE.md
+[tests-image]: https://github.com/jihed-chalghaf/unicerts/workflows/tests/badge.svg
+[tests-workflow]: https://github.com/jihed-chalghaf/unicerts/actions/workflows/tests.yml
+[cov-image]: https://jihed-chalghaf.github.io/unicerts/badges/coverage.svg
+[repo-actions]: https://github.com/jihed-chalghaf/unicerts/actions
 
 ## ☆ Overview
 
