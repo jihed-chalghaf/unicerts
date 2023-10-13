@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: BSD-4-Clause
 pragma solidity 0.8.18;
 
 // Uncomment this line to use console.log
