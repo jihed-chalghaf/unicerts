@@ -1,12 +1,9 @@
 // SPDX-License-Identifier: BSD-4-Clause
 pragma solidity 0.8.18;
 
-// Uncomment this line to use console.log
-// import "hardhat/console.sol";
-
 contract Unicerts {
     struct Certificate {
-        bytes32 cid; // any change to the certificate on IPFS will produce a different cid
+        bytes32 cid;
         address studentAddr;
         bool approved;
         bool pending;
@@ -14,8 +11,8 @@ contract Unicerts {
 
     struct Student {
         address addr;
-        bytes32 cid; // CID of the file containing the student's full data in IPFS
-        bytes32[] certsCIDs; // CIDs of the student's certs
+        bytes32 cid;
+        bytes32[] certsCIDs;
     }
 
     mapping(address => uint256) private studentsIndexes;
@@ -28,7 +25,7 @@ contract Unicerts {
     address public immutable admin;
 
     constructor() {
-        admin = msg.sender; // specifiy the admin when deploying the contract;
+        admin = msg.sender;
     }
 
     // ⸻⸻⮞ Events ⮜⸻⸻
