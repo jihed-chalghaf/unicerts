@@ -18,10 +18,10 @@
     "test": "npx hardhat test",
     "deploy": "npx hardhat run --network deploy scripts/deploy.ts",
     "deploy:dev": "npx hardhat run --network localhost scripts/deploy.ts",
-    "coverage": "npx hardhat coverage",
+    "test:cov": "npx hardhat coverage",
     "clean": "npx hardhat clean",
     "analyze": "slither . --filter-paths 'test|node_modules|scripts'",
-    "analyze-triage": "slither . --filter-paths 'test|node_modules|script' --triage-mode"
+    "analyze:triage": "slither . --filter-paths 'test|node_modules|script' --triage-mode"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^2.0.0",
