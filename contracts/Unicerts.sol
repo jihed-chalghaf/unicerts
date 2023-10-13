@@ -3,25 +3,42 @@ pragma solidity 0.8.18;
 
 contract Unicerts {
     struct Certificate {
+        // the certificate's CID on IPFS, where it holds the certificate's full data
         bytes32 cid;
+        // the address of the student who owns the certificate
         address studentAddr;
+        // represents whether the certificate is approved by the admin
         bool approved;
+        // represents whether the certificate is still pending for review
         bool pending;
     }
 
     struct Student {
+        // the student's address
         address addr;
+        // the student's CID on IPFS, where it holds the student's full data
         bytes32 cid;
+        // an array containing the CIDs of the certificates issued to/requested by the student
         bytes32[] certsCIDs;
     }
 
+    // returns the student's index, icremented by one, in the students array for the given student address
+    // example: studentsIndexes[EXAMPLE_ADDRESS] = N
+    // if N = 0 -> there's no student stored in students array with the given EXAMPLE_ADDRESS
+    // if N > 0 -> the student is stored at students[N - 1]
     mapping(address => uint256) private studentsIndexes;
+    // returns the certificate's index, icremented by one, in the certificates array for the given certificate's CID
+    // example: certificatesIndexes[EXAMPLE_CERT_CID] = N
+    // if N = 0 -> there's no certificate stored in certificates array with the given EXAMPLE_CERT_CID
+    // if N > 0 -> the certificate is stored at certificates[N - 1]
     mapping(bytes32 => uint256) private certificatesIndexes;
 
+    // array containing the students added to the contract
     Student[] private students;
+    // array containing the certificates issued/reviewed by the contract
     Certificate[] private certificates;
 
-    // should be someone trustworthy from the university's administration
+    // the admin's address, should be someone trustworthy from the university's administration
     address public immutable admin;
 
     constructor() {
@@ -35,11 +52,13 @@ contract Unicerts {
     event AddStudent(address studentAddr, bytes32 studentCid);
 
     // ⸻⸻⮞ Modifiers ⮜⸻⸻
+    /// @dev Prevents calling a function from anyone except the admin
     modifier onlyAdmin() {
         require(msg.sender == admin, "UNICERTS: ONLY_ADMIN");
         _;
     }
 
+    /// @dev Prevents calling a function from anyone except registered students
     modifier onlyStudent() {
         require(studentsIndexes[msg.sender] != 0, "UNICERTS: ONLY_STUDENT");
         _;
