@@ -79,11 +79,11 @@ $  yarn  compile
 
 ```bash
 # Option 1: Run tests
+# Note: to enable gas usage reports, set env variables REPORT_GAS & COINMARKETCAP_API_KEY.
 $  yarn  test
-# Option 2: Run tests and get a coverage report
-$  yarn  coverage
+# Option 2: Run tests and generate a coverage report
+$  yarn  test:cov
 ```
-You can set env variables `REPORT_GAS` & `COINMARKETCAP_API_KEY` to enable gas usage reports.
 
 ### 5. Run Vulnerability Analysis Tool
 
