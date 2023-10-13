@@ -1,7 +1,7 @@
 {
   "name": "unicerts",
   "description": "Smart contract for handling university certificates authenticity",
-  "license": "UNLICENSED",
+  "license": "BSD-4-Clause",
   "version": "0.0.1",
   "keywords": [
     "unicerts",
