@@ -54,7 +54,7 @@ export async function readFile(
  *
  * * Stripping leading 2 bytes from 34 byte IPFS hash.
  *
- * * Assumes IPFS defaults: function:0x12=sha2, size:0x20=256 bits.
+ * * Assumes IPFS defaults: **function**: `0x12` which refers to `sha2`, **size**: `0x20` which refers to `256 bits`.
  *
  * * E.g. `"QmdUBwxw9cCGcBKzz93hTz1zTipHKVcmnYZhXTE25RPWdf"` -> `"0xe0cdb108dbf4b2a880ec0e9329249206bab69e25b80d74eb735d2970648eb992"`
  * @param {string} cid - The cid to be converted.
@@ -72,9 +72,9 @@ export function getBytes32FromCID(cid: string): string {
  * @returns {string} The original cid.
  */
 export function getCIDFromBytes32(bytes32Hex: string): string {
-  // Add our default ipfs values for first 2 bytes:
-  // function:0x12=sha2, size:0x20=256 bits
-  // and cut off leading "0x"
+  // Add our default ipfs values for the first 2 bytes:
+  // function: 0x12 which refers to sha2, size: 0x20 which refers to 256 bits -> "1220"
+  // and remove leading "0x" through input.slice(2)
   const hashHex = "1220" + bytes32Hex.slice(2);
   const hashBytes = Buffer.from(hashHex, "hex");
 
