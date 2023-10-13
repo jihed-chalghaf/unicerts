@@ -40,7 +40,6 @@
     "bs58": "^5.0.0",
     "chai": "4.3.6",
     "check-peer-dependencies": "^4.1.0",
-    "coverage-badges-cli": "^1.1.1",
     "dotenv": "^16.0.3",
     "ethers": "5.7.2",
     "hardhat-gas-reporter": "1.0.9",
