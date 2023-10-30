@@ -56,8 +56,8 @@ A smart contract that manages issuing & verifying university certificates, built
 
 ### 1. Clone the Project
 ```bash
-$  git  clone  https://github.com/jihed-chalghaf/unicerts.git
-$  cd  unicerts
+$  git clone https://github.com/jihed-chalghaf/unicerts.git
+$  cd unicerts
 ```
 
 The following assumes the use of `node@>=16`.
@@ -65,24 +65,24 @@ The following assumes the use of `node@>=16`.
 ### 2. Install Dependencies
 
 ```bash
-$  npm  install  -g  yarn
+$  npm install -g yarn
 $  yarn
 ```
 
 ### 3. Compile Contracts
 
 ```bash
-$  yarn  compile
+$  yarn compile
 ```
 
 ### 4. Test Contracts
 
 ```bash
 # Option 1: Run tests
-# Note: to enable gas usage reports, set env variables REPORT_GAS & COINMARKETCAP_API_KEY.
-$  yarn  test
+# Note: to enable gas usage reports, set env variables REPORT_GAS & COINMARKETCAP_API_KEY
+$  yarn test
 # Option 2: Run tests and generate a coverage report
-$  yarn  test:cov
+$  yarn test:cov
 ```
 
 ### 5. Run Vulnerability Analysis Tool
